@@ -84,7 +84,8 @@ async function run({ text, url, task }) {
     const start = performance.now();
     if (!vision_inputs) {
         // Cache vision inputs when possible
-        const image = await RawImage.fromURL(url);
+        // const image = await RawImage.fromURL(url);
+        const image = await RawImage.fromBlob(url);
         image_size = image.size;
         vision_inputs = await processor(image);
     }
@@ -122,12 +123,10 @@ self.addEventListener('message', async (e) => {
     switch (type) {
         case 'load':
             load();
-            break;
-
+            break
         case 'run':
             run(data);
-            break;
-
+            break
         case 'reset':
             vision_inputs = image_size = null;
             break;

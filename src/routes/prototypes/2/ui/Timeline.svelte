@@ -6,7 +6,7 @@
     </video>
     <br>
     <canvas id="canvas" hidden></canvas>
-    <p>Snapshots getted: {snapshots.length} from {videoDuration}</p>
+    <p>Snapshots getted: {timeline.snapshots.length} from {videoDuration}</p>
 {:else}
     <!-- upload -->
     Upload video: <input type="file" accept="video/*" bind:this={inputTag} />
@@ -14,9 +14,9 @@
 {/if}
 
 <!-- Timeline/Snapshots -->
-{#if snapshots.length > 0}
+{#if timeline.snapshots.length > 0}
     <hr>
-    {#each snapshots as snapshot, i}
+    {#each timeline.snapshots as snapshot, i}
         <!-- SnapshotCell -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -54,9 +54,10 @@ img.selected {
 </style>
 
 <script>
+import { timeline } from "../store.svelte"
 
 let inputTag = $state(null)
-$effect(() => inputTag.addEventListener('change',  uploadVideo))
+$effect(() => inputTag?.addEventListener('change',  uploadVideo))
 let isVideoUploaded = $state(false)
 let isVideoProcessed = $state(false)
 let videoTag = $state(null)
@@ -67,7 +68,7 @@ function uploadVideo(event) {
     if (event.target.files && event.target.files[0]) {
         isVideoUploaded = true
         isVideoProcessed = false
-        snapshots = []
+        timeline.snapshots = []
         var reader = new FileReader()
         reader.onload = function(e) {
             videoSrc.src = e.target.result
@@ -99,16 +100,17 @@ function getSnapshots() {
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
     canvas.getContext("2d").drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
-    canvas.toBlob((blob) => {if (blob && blob.size > 30000) snapshots.push(new Snapshot(blob))})
+    canvas.toBlob((blob) => {if (blob && blob.size > 30000) timeline.snapshots.push(new Snapshot(blob))})
     video.currentTime += 1
 
 }
 
 // Timeline
-let snapshots = $state([])
 class Snapshot {
     constructor(buffer) {
         this.buffer = buffer
+        this.detections = {}
+        this.detectionTime = null
     }
 }
 
@@ -117,7 +119,7 @@ let selectedSnapshot = $state(null)
 let selectedSnapshotIndex = $state(0)
 function selectSnapshot(snapshotIndex) {
     selectedSnapshotIndex = snapshotIndex
-    selectedSnapshot = snapshots[selectedSnapshotIndex]
+    selectedSnapshot = timeline.snapshots[selectedSnapshotIndex]
 }
 
 // Player
@@ -125,7 +127,7 @@ let timerId = null, isPlaying = $state(false)
 function play() {
     isPlaying = true
     timerId = setInterval(() => {
-        if (selectedSnapshotIndex < snapshots.length) {
+        if (selectedSnapshotIndex < timeline.snapshots.length) {
             selectSnapshot(selectedSnapshotIndex)
             selectedSnapshotIndex++
         } else {

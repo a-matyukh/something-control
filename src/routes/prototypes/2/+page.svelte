@@ -1,4 +1,4 @@
-<!-- <Timeline /> -->
+<Timeline />
 <Detector />
 
 <script>
