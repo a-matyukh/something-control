@@ -1,7 +1,7 @@
 <!-- processing -->
 {#if isVideoUploaded && !isVideoProcessed}
     <!-- svelte-ignore a11y_media_has_caption -->
-    <video width="640" id="video-tag" bind:this={videoTag}>
+    <video id="video-tag" bind:this={videoTag}>
         <source id="video-source" bind:this={videoSrc}>
     </video>
     <br>
@@ -15,30 +15,42 @@
 
 <!-- Timeline/Snapshots -->
 {#if timeline.snapshots.length > 0}
-    <hr>
-    {#each timeline.snapshots as snapshot, i}
-        <!-- SnapshotCell -->
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <img class:selected={snapshot === selectedSnapshot} width={30 * zoom} src={URL.createObjectURL(snapshot.buffer)} alt="" onclick={() => selectSnapshot(i)}>
-    {/each}
-    <hr>
-{/if}
-
-
-{#if isVideoProcessed}
-    <!-- selectedSnapshot / SnapshotPreview -->
-    {#if selectedSnapshot}
-        <div>
-            <img width="300" src={URL.createObjectURL(selectedSnapshot.buffer)} alt="">
-        </div>
-    {/if}
     <!-- Zoom -->
     <div>
         Zoom: 
         <input type="range" min="0.1" max="5" step="0.1" bind:value={zoom} oninput={e => changeZoom(e.target.value)}>
         {zoom}
     </div>
+    <hr>
+    {#each timeline.snapshots as snapshot, i}
+        <!-- SnapshotCell -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+        <img class:selected={snapshot === selectedSnapshot} class:detecting={timeline.currentDetectingSnapshotIndex === i} class:detected={snapshot.detections != null} width={30 * zoom} src={URL.createObjectURL(snapshot.buffer)} alt="" onclick={() => selectSnapshot(i)}>
+    {/each}
+    <hr>
+{/if}
+
+
+
+
+{#if isVideoProcessed}
+    <!-- selectedSnapshot / SnapshotPreview -->
+    {#if selectedSnapshot}
+
+
+        <div id="selectedSnapshot">
+            {#if selectedSnapshot.detections?.bboxes}
+                {#each selectedSnapshot.detections?.bboxes as bbox}
+                    <div class="bbox" style="left: {bbox[0]}px; top: {bbox[1]}px; width: {bbox[2] - bbox[0]}px; height: {bbox[3] - bbox[1]}px;"></div>
+                {/each}
+            {/if}
+            <img width="320" src={URL.createObjectURL(selectedSnapshot.buffer)} alt="">
+        </div>
+
+
+        <p>{JSON.stringify(selectedSnapshot)}</p>
+    {/if}
     <!-- Player -->
     <div>
         <button onclick={play}>Play</button>
@@ -49,6 +61,21 @@
 
 <style>
 img.selected {
+    outline: 3px solid blue;
+}
+img.detecting {
+    border-bottom: 5px solid orange;
+}
+img.detected {
+    border-bottom: 5px solid green;
+}
+:global(#selectedSnapshot) {
+    position: relative;
+    /* width: 500px; */
+    /* height: 600px; */
+}
+:global(div.bbox) {
+    position: absolute;
     outline: 3px solid orange;
 }
 </style>
@@ -63,6 +90,10 @@ let isVideoProcessed = $state(false)
 let videoTag = $state(null)
 let videoSrc = $state(null)
 let videoDuration = $state(0)
+
+let sampleSnapshot = {"buffer":{},"detections":{"labels":["bunny"],"bboxes":[[74.72,42.032,172.64,168.344]]},"detectionTime":"1402.10"}
+
+
 
 function uploadVideo(event) {
     if (event.target.files && event.target.files[0]) {
@@ -109,7 +140,7 @@ function getSnapshots() {
 class Snapshot {
     constructor(buffer) {
         this.buffer = buffer
-        this.detections = {}
+        this.detections = null
         this.detectionTime = null
     }
 }

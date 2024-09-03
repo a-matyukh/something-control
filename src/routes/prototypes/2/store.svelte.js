@@ -1,5 +1,6 @@
 class TimelineStore {
     snapshots = $state([])
+    currentDetectingSnapshotIndex = $state(0)
     add(snapshot) {
         this.snapshots.push(snapshot)
     }

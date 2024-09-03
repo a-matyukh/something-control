@@ -1,4 +1,3 @@
-<!-- <p><img width="400" src="/bird.jpeg" alt=""></p> -->
 <hr>
 <p>Model: Florence-2</p>
 {#if !status}
@@ -12,18 +11,12 @@
     </div>
 {:else}
     <p>Prompt: <input type="text" bind:value={text} disabled={isBatchDetecting}></p>
-    <!-- <p><button onclick={detect} disabled={status === 'running'}>detect</button></p>
-    {#if result}
-        <p>Result: {JSON.stringify(result)}</p>
-        <p>Execution time: {time.toFixed(2)} ms</p>
-    {/if} -->
-
+    <button onclick={detectSnapshots} disabled={isBatchDetecting}>detectSnapshots</button>
+    <p>currentDetectingSnapshotIndex: {timeline.currentDetectingSnapshotIndex}</p>
+    <p>isBatchDetecting: {isBatchDetecting}</p>
+    <p>timeline.snapshots: {JSON.stringify(timeline.snapshots)}</p>
 {/if}
 
-<button onclick={detectSnapshots} disabled={isBatchDetecting}>detectSnapshots</button>
-<p>currentDetectingSnapshotIndex: {currentDetectingSnapshotIndex}</p>
-<p>isBatchDetecting: {isBatchDetecting}</p>
-<p>timeline.snapshots: {JSON.stringify(timeline.snapshots)}</p>
 
 <script>
 let IS_WEBGPU_AVAILABLE = $state(null)
@@ -59,16 +52,13 @@ function clear() {
 }
 
 import { timeline } from "../store.svelte"
-let currentDetectingSnapshotIndex = $state(0)
 let snapshotsSize = $derived(timeline.snapshots.length)
-// let snapshotsSize = 3
 let isBatchDetecting = $state(false)
 function detectSnapshots() {
-    console.log(currentDetectingSnapshotIndex, snapshotsSize)
-    if (currentDetectingSnapshotIndex < snapshotsSize) {
+    if (timeline.currentDetectingSnapshotIndex < snapshotsSize) {
         isBatchDetecting = true
         clear()
-        image = timeline.snapshots[currentDetectingSnapshotIndex].buffer
+        image = timeline.snapshots[timeline.currentDetectingSnapshotIndex].buffer
         detect()
     } else {
         isBatchDetecting = false
@@ -103,9 +93,9 @@ const onMessageReceived = (e) => {
             time = e.data.time
             status = 'ready'
             if (isBatchDetecting) {
-                timeline.snapshots[currentDetectingSnapshotIndex].detections = e.data.result["<CAPTION_TO_PHRASE_GROUNDING>"]
-                timeline.snapshots[currentDetectingSnapshotIndex].detectionTime = e.data.time.toFixed(2)
-                currentDetectingSnapshotIndex++
+                timeline.snapshots[timeline.currentDetectingSnapshotIndex].detections = e.data.result["<CAPTION_TO_PHRASE_GROUNDING>"]
+                timeline.snapshots[timeline.currentDetectingSnapshotIndex].detectionTime = e.data.time.toFixed(2)
+                timeline.currentDetectingSnapshotIndex++
                 detectSnapshots()
             }
             break
