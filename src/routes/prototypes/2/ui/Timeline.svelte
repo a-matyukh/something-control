@@ -1,5 +1,3 @@
-
-
 <!-- processing -->
 {#if isVideoUploaded && !isVideoProcessed}
     <!-- svelte-ignore a11y_media_has_caption -->
@@ -15,10 +13,11 @@
     <hr>
 {/if}
 
-<!-- timeline -->
+<!-- Timeline/Snapshots -->
 {#if snapshots.length > 0}
     <hr>
     {#each snapshots as snapshot, i}
+        <!-- SnapshotCell -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <img class:selected={snapshot === selectedSnapshot} width={30 * zoom} src={URL.createObjectURL(snapshot.buffer)} alt="" onclick={() => selectSnapshot(i)}>
@@ -43,8 +42,8 @@
     <!-- Player -->
     <div>
         <button onclick={play}>Play</button>
-        {selectedSnapshotIndex} - {isPlaying}
         <button onclick={stop}>Stop</button>
+        {selectedSnapshotIndex} - {isPlaying}
     </div>
 {/if}
 
@@ -56,7 +55,7 @@ img.selected {
 
 <script>
 
-let inputTag = null
+let inputTag = $state(null)
 $effect(() => inputTag.addEventListener('change',  uploadVideo))
 let isVideoUploaded = $state(false)
 let isVideoProcessed = $state(false)
@@ -105,13 +104,13 @@ function getSnapshots() {
 
 }
 
+// Timeline
+let snapshots = $state([])
 class Snapshot {
     constructor(buffer) {
         this.buffer = buffer
     }
 }
-let snapshots = $state([])
-
 
 // SelectedSnapshot
 let selectedSnapshot = $state(null)
