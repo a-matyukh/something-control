@@ -1,22 +1,26 @@
-<hr>
-<p>Model: Florence-2</p>
-{#if !status}
-    <p><button onclick={load}>load</button></p>
-{:else if status === "loading"}
-    <p>loadingMessage: {loadingMessage}</p>
-    <div>
-        {#each progressItems as { file, progress, total }}
-            <p>{file}: ({progress?.toFixed(2)}%{isNaN(total) ? '' : ` of ${formatBytes(total)}`})</p>
-        {/each}
-    </div>
-{:else}
-    <p>Prompt: <input type="text" bind:value={text} disabled={isBatchDetecting}></p>
-    <button onclick={detectSnapshots} disabled={isBatchDetecting}>detectSnapshots</button>
-    <p>currentDetectingSnapshotIndex: {timeline.currentDetectingSnapshotIndex}</p>
-    <p>isBatchDetecting: {isBatchDetecting}</p>
-    <p>timeline.snapshots: {JSON.stringify(timeline.snapshots)}</p>
-{/if}
+<div>
+    <p>Model: Florence-2</p>
+    {#if !status}
+        <p><button onclick={load}>load</button></p>
+    {:else if status === "loading"}
+        <p>loadingMessage: {loadingMessage}</p>
+        <section>
+            {#each progressItems as { file, progress, total }}
+                <p>{file}: ({progress?.toFixed(2)}%{isNaN(total) ? '' : ` of ${formatBytes(total)}`})</p>
+            {/each}
+        </section>
+    {:else}
+        <p>Prompt: <input type="text" bind:value={text} disabled={isBatchDetecting}></p>
+        <button onclick={detectSnapshots} disabled={isBatchDetecting}>detectSnapshots</button>
+    {/if}
+</div>
 
+<style>
+div {
+    padding: 10px;
+    border-left: 1px solid #ccc;
+}
+</style>
 
 <script>
 let IS_WEBGPU_AVAILABLE = $state(null)
@@ -28,7 +32,7 @@ let loadingMessage = $state("")
 let progressItems = $state([])
 
 let task = $state("<CAPTION_TO_PHRASE_GROUNDING>")
-let text = $state("bunny")
+let text = $state("")
 
 let image = $state('/bird.jpeg')
 let result = $state(null)

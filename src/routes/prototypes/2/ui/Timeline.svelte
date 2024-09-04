@@ -1,78 +1,96 @@
-<!-- processing -->
-{#if isVideoUploaded && !isVideoProcessed}
-    <!-- svelte-ignore a11y_media_has_caption -->
-    <video id="video-tag" bind:this={videoTag}>
-        <source id="video-source" bind:this={videoSrc}>
-    </video>
-    <br>
-    <canvas id="canvas" hidden></canvas>
-    <p>Snapshots getted: {timeline.snapshots.length} from {videoDuration}</p>
-{:else}
-    <!-- upload -->
-    Upload video: <input type="file" accept="video/*" bind:this={inputTag} />
-    <hr>
-{/if}
+<div>
+    <header>
+        <!-- processing -->
+        {#if isVideoUploaded && !isVideoProcessed}
+            <!-- svelte-ignore a11y_media_has_caption -->
+            <video width="320" id="video-tag" bind:this={videoTag}>
+                <source id="video-source" bind:this={videoSrc}>
+            </video>
+            <br>
+            <canvas id="canvas" hidden></canvas>
+            <p>Snapshots getted: {timeline.snapshots.length} from {videoDuration}</p>
+        {:else}
+            <!-- upload -->
+            <span>
+                <button onclick={() => inputTag.click()}>Upload video</button>
+                <input type="file" accept="video/*" bind:this={inputTag} hidden />
+            </span>
 
-<!-- Timeline/Snapshots -->
-{#if timeline.snapshots.length > 0}
-    <!-- Zoom -->
-    <div>
-        Zoom: 
-        <input type="range" min="0.1" max="5" step="0.1" bind:value={zoom} oninput={e => changeZoom(e.target.value)}>
-        {zoom}
-    </div>
-    <hr>
-    {#each timeline.snapshots as snapshot, i}
-        <!-- SnapshotCell -->
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <img class:selected={snapshot === selectedSnapshot} class:detecting={timeline.currentDetectingSnapshotIndex === i} class:detected={snapshot.detections != null} width={30 * zoom} src={URL.createObjectURL(snapshot.buffer)} alt="" onclick={() => selectSnapshot(i)}>
-    {/each}
-    <hr>
-{/if}
-
-
-
-
-{#if isVideoProcessed}
-    <!-- selectedSnapshot / SnapshotPreview -->
-    {#if selectedSnapshot}
-
-
-        <div id="selectedSnapshot">
-            {#if selectedSnapshot.detections?.bboxes}
-                {#each selectedSnapshot.detections?.bboxes as bbox}
-                    <div class="bbox" style="left: {bbox[0]}px; top: {bbox[1]}px; width: {bbox[2] - bbox[0]}px; height: {bbox[3] - bbox[1]}px;"></div>
-                {/each}
+            {#if isVideoProcessed}
+                <!-- Zoom -->
+                <span>
+                    Zoom: 
+                    <input type="range" min="0.1" max="5" step="0.1" bind:value={zoom} oninput={e => changeZoom(e.target.value)}>
+                    {zoom}
+                </span>
+                <!-- Player -->
+                <span>
+                    {#if isPlaying}
+                        <button onclick={stop}>Stop</button>
+                    {:else}
+                        <button onclick={play}>Play</button>
+                    {/if}
+                </span>
             {/if}
-            <img width="320" src={URL.createObjectURL(selectedSnapshot.buffer)} alt="">
+
+        {/if}
+    </header>
+    
+    <!-- Timeline/Snapshots -->
+    {#if timeline.snapshots.length > 0}
+        <hr>
+        <div id="timeline">
+            {#each timeline.snapshots as snapshot, i}
+                <!-- SnapshotCell -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                <img class:selected={snapshot === selectedSnapshot} class:detecting={timeline.currentDetectingSnapshotIndex === i} class:detected={snapshot.detections != null} width={30 * zoom} src={URL.createObjectURL(snapshot.buffer)} alt="" onclick={() => selectSnapshot(i)}>
+            {/each}
         </div>
-
-
-        <p>{JSON.stringify(selectedSnapshot)}</p>
+        <hr>
     {/if}
-    <!-- Player -->
-    <div>
-        <button onclick={play}>Play</button>
-        <button onclick={stop}>Stop</button>
-        {selectedSnapshotIndex} - {isPlaying}
-    </div>
-{/if}
 
+    {#if isVideoProcessed}
+        <!-- selectedSnapshot / SnapshotPreview -->
+        {#if selectedSnapshot}
+            <div id="selectedSnapshot">
+                {#if selectedSnapshot.detections?.bboxes}
+                    {#each selectedSnapshot.detections?.bboxes as bbox}
+                        <div class="bbox" style="left: {bbox[0]}px; top: {bbox[1]}px; width: {bbox[2] - bbox[0]}px; height: {bbox[3] - bbox[1]}px;"></div>
+                    {/each}
+                {/if}
+                <img width="640" src={URL.createObjectURL(selectedSnapshot.buffer)} alt="">
+                <p>detectionTime: {selectedSnapshot.detectionTime}</p>
+            </div>
+        {/if}
+    {/if}
+
+</div>
 <style>
+header {
+    padding: 10px;
+}
+:global(header span) {
+    margin-right: 15px;
+}
+#timeline {
+    padding: 10px;
+}
 img.selected {
-    outline: 3px solid blue;
+    outline: 5px solid cornflowerblue;
+    opacity: .3;
 }
 img.detecting {
-    border-bottom: 5px solid orange;
+    outline: 5px solid orange;
 }
 img.detected {
-    border-bottom: 5px solid green;
+    outline: 5px solid yellowgreen;
+}
+#selectedSnapshot p {
+    margin-left: 10px;
 }
 :global(#selectedSnapshot) {
     position: relative;
-    /* width: 500px; */
-    /* height: 600px; */
 }
 :global(div.bbox) {
     position: absolute;
